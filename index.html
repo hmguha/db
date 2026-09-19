@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Familie- og Hockey-dashboard</title>
+    <style>
+        /* Nullstiller marger og setter helskjerm for TV */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #0b0b0b;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+        }
+
+        #dashboard-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #0b0b0b; 
+        }
+
+        /* Frisk Asker-logo som stort, pent vannmerke i bakgrunnen */
+        #dashboard-wrapper::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%; 
+            height: 70%;
+            background-image: url('https://sportality.cdn.s8y.se/team-logos/fri1_fri.svg');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.25; 
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Grid-oppsett for storskjerm (tilpasset sofa-avstand) */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 160px 1fr;
+            gap: 20px;
+            width: 96vw;
+            height: 94vh; 
+            background: transparent; 
+            padding: 10px;
+            z-index: 1;
+            box-sizing: border-box;
+        }
+
+        .section {
+            background: rgba(0, 0, 0, 0.75); 
+            padding: 16px 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 0; 
+        }
+
+        .weather-section {
+            grid-column: 1 / span 2;
+            grid-row: 1;
+        }
+
+        .calendar-section {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .hockey-section {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .section h2 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #ffb703;
+        }
+
+        /* Ekte Google Kalender Iframe tilpasset storskjerm */
+        iframe.calendar-embed {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+        }
+
+        #weather-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .weather-hour {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center;
+            gap: 4px;
+        }
+        
+        .weather-hour .temp {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        
+        .weather-hour .precip {
+            color: #4da6ff;
+            font-size: 0.95rem;
+        }
+
+        /* Hockey */
+        .hockey-container {
+            display: flex;
+            flex-direction: column; 
+            gap: 12px;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .hockey-table-wrapper {
+            flex: 1;
+            overflow-y: auto; 
+            scrollbar-width: none; 
+            -ms-overflow-style: none;  
+        }
+        .hockey-table-wrapper::-webkit-scrollbar {
+            display: none; 
+        }
+
+        .hockey-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1rem;
+        }
+        
+        .hockey-table th, .hockey-table td {
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .hockey-table th {
+            color: #ccc;
+            position: sticky;
+            top: 0;
+            background: rgba(15, 15, 15, 0.95);
+            z-index: 2;
+            font-size: 0.95rem;
+        }
+
+        .hockey-table tr.highlight-team td {
+            font-weight: bold;
+            color: #ffffff;
+            background-color: rgba(255, 140, 0, 0.5);
+        }
+
+        .hockey-table tr.highlight-team td:first-child {
+            border-left: 5px solid #ff8c00;
+        }
+
+        .hockey-games {
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .hockey-games li {
+            list-style: none;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .hockey-games li.highlight-game {
+            border-left: 5px solid #ff8c00;
+            background: rgba(255, 140, 0, 0.25);
+        }
+
+        h3 {
+            margin-top: 0;
+            margin-bottom: 6px;
+            font-size: 1.05rem;
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="dashboard-wrapper">
+    <div class="dashboard">
+        
+        <!-- Værseksjonen (Topp) -->
+        <div class="section weather-section">
+            <h2>Været i Oslo</h2>
+            <div id="weather-container">
+                <p>Laster inn værvarsel...</p>
+            </div>
+        </div>
+
+        <!-- Kalenderseksjonen (Venstre) -->
+        <div class="section calendar-section">
+            <h2>Kommende hendelser</h2>
+            <iframe class="calendar-embed" src="https://calendar.google.com/calendar/embed?src=hmguha%40gmail.com&ctz=Europe/Oslo&mode=AGENDA&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" scrolling="no"></iframe>
+        </div>
+
+        <!-- Hockeyseksjonen (Høyre) -->
+        <div class="section hockey-section">
+            <h2>Elitehockeyligaen (EHL)</h2>
+            <div class="hockey-container">
+                <div>
+                    <h3>Neste kamper</h3>
+                    <ul class="hockey-games">
+                        <li class="highlight-game"><strong>I dag, 18:30:</strong> Frisk Asker vs. Vålerenga</li>
+                        <li class="highlight-game"><strong>24. sep, 18:30:</strong> Frisk Asker vs. Narvik</li>
+                        <li class="highlight-game"><strong>1. okt, 18:30:</strong> Frisk Asker vs. Lillehammer</li>
+                    </ul>
+                </div>
+
+                <div class="hockey-table-wrapper">
+                    <table class="hockey-table">
+                        <tr>
+                            <th>#</th>
+                            <th>Lag</th>
+                            <th>K</th>
+                            <th>P</th>
+                        </tr>
+                        <tr><td>1</td><td>Storhamar</td><td>1</td><td>3</td></tr>
+                        <tr><td>2</td><td>Vålerenga</td><td>1</td><td>3</td></tr>
+                        <tr><td>3</td><td>Lillehammer</td><td>1</td><td>3</td></tr>
+                        <tr><td>4</td><td>Narvik</td><td>1</td><td>3</td></tr>
+                        <tr><td>5</td><td>Nidaros</td><td>0</td><td>0</td></tr>
+                        <tr class="highlight-team">
+                            <td>6</td><td>Frisk Asker</td><td>1</td><td>0</td>
+                        </tr>
+                        <tr><td>7</td><td>Ringerike Panthers</td><td>1</td><td>0</td></tr>
+                        <tr><td>8</td><td>Stavanger Oilers</td><td>1</td><td>0</td></tr>
+                        <tr><td>9</td><td>Stjernen</td><td>1</td><td>0</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-scroll for hockeytabellen (sentrerer Frisk Asker)
+    setTimeout(() => {
+        const friskRow = document.querySelector('.highlight-team');
+        if (friskRow) {
+            friskRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 800);
+
+    // Værmelding (viser opplevd temperatur og nedbør)
+    async function fetchWeather() {
+        const container = document.getElementById('weather-container');
+        if (!container) return;
+        
+        const url = 'https://api.open-meteo.com/v1/forecast?latitude=59.91&longitude=10.75&hourly=temperature_2m,apparent_temperature,precipitation&timezone=Europe%2FOslo&forecast_days=2';
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            container.innerHTML = ''; 
+
+            const now = new Date();
+            const currentHourString = now.toISOString().slice(0, 14) + "00"; 
+            const startIndex = data.hourly.time.findIndex(t => t >= currentHourString) || 0;
+
+            for(let i = startIndex; i < startIndex + 8; i++) {
+                const timeRaw = new Date(data.hourly.time[i]);
+                const timeFormatted = timeRaw.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+                const feelsLike = data.hourly.apparent_temperature[i];
+                const precip = data.hourly.precipitation[i];
+
+                const weatherHour = document.createElement('div');
+                weatherHour.className = 'weather-hour';
+                weatherHour.innerHTML = `
+                    <div style="font-weight:bold;">${timeFormatted}</div>
+                    <div class="temp">${feelsLike}°C</div>
+                    <div class="precip">${precip} mm</div>
+                `;
+                container.appendChild(weatherHour);
+            }
+
+        } catch (error) {
+            container.innerHTML = '<p>Kunne ikke laste værdata.</p>';
+        }
+    }
+
+    fetchWeather();
+    setInterval(fetchWeather, 3600000);
+</script>
+
+</body>
+</html>
